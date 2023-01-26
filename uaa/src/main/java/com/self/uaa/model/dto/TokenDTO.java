@@ -1,5 +1,6 @@
 package com.self.uaa.model.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -10,9 +11,9 @@ import lombok.Setter;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@Getter
 @Setter
-public class AuthResponseDTO {
+@Getter
+public class TokenDTO {
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     private String accessToken;
     @JsonInclude(JsonInclude.Include.NON_EMPTY)

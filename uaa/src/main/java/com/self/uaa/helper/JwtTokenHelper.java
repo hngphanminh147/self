@@ -9,7 +9,6 @@ import org.springframework.stereotype.Component;
 
 import javax.crypto.spec.SecretKeySpec;
 import java.io.Serializable;
-import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -18,10 +17,17 @@ import java.util.function.Function;
 @Component
 public class JwtTokenHelper implements Serializable {
 
-    public static final long JWT_TOKEN_VALIDITY = 5 * 60 * 60;
+    @Value("${jwt.validity.access}")
+    public long ACCESS_TOKEN_VALIDITY;
 
-    @Value("${jwt.secret}")
-    private String secret;
+    @Value("${jwt.validity.access}")
+    public long REFRESH_TOKEN_VALIDITY;
+
+    @Value("${jwt.secret.access}")
+    private String ACCESS_TOKEN_SECRET;
+
+    @Value("${jwt.secret.refresh}")
+    private String REFRESH_TOKEN_SECRET;
 
     public String getSubject(String token) {
         return getTokenClaim(token, Claims::getSubject);
@@ -35,17 +41,40 @@ public class JwtTokenHelper implements Serializable {
         return (new Date()).after(getExpirationDate(token));
     }
 
-    public String generateToken(UserDetails userDetails) {
-        return generateToken(new HashMap<>(), userDetails.getUsername());
+    public String generateAccessToken(UserDetails userDetails) {
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("authorities", userDetails.getAuthorities());
+        return generateToken(claims, userDetails.getUsername(), ACCESS_TOKEN_VALIDITY, ACCESS_TOKEN_SECRET);
     }
 
-    private String generateToken(Map<String, Object> claims, String subject) {
+    public String generateRefreshToken(UserDetails userDetails) {
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("authorities", userDetails.getAuthorities());
+        return generateToken(claims, userDetails.getUsername(), REFRESH_TOKEN_VALIDITY, REFRESH_TOKEN_SECRET);
+    }
+
+    public String regenerateRefreshToken(String refreshToken) {
+        Claims claims = getAllTokenClaims(refreshToken);
+        String subject = claims.getSubject();
+        return generateToken(claims, subject, REFRESH_TOKEN_VALIDITY, REFRESH_TOKEN_SECRET);
+    }
+
+    private String generateToken(Map<String, Object> claims, String subject, Long validity, String secret) {
         return Jwts.builder()
                 .setClaims(claims)
                 .setSubject(subject)
-                .claim("authorities", Collections.singletonList("ADMIN"))
                 .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + JWT_TOKEN_VALIDITY * 1000))
+                .setExpiration(new Date(System.currentTimeMillis() + validity))
+                .signWith(new SecretKeySpec(secret.getBytes(), SignatureAlgorithm.HS256.getJcaName()))
+                .compact();
+    }
+
+    private String generateToken(Claims claims, String subject, Long validity, String secret) {
+        return Jwts.builder()
+                .setClaims(claims)
+                .setSubject(subject)
+                .setIssuedAt(new Date(System.currentTimeMillis()))
+                .setExpiration(new Date(System.currentTimeMillis() + validity))
                 .signWith(new SecretKeySpec(secret.getBytes(), SignatureAlgorithm.HS256.getJcaName()))
                 .compact();
     }
@@ -60,7 +89,7 @@ public class JwtTokenHelper implements Serializable {
     }
 
     private Claims getAllTokenClaims(String token) {
-        return Jwts.parserBuilder().setSigningKey(new SecretKeySpec(secret.getBytes(),
+        return Jwts.parserBuilder().setSigningKey(new SecretKeySpec(REFRESH_TOKEN_SECRET.getBytes(),
                 SignatureAlgorithm.HS256.getJcaName())).build().parseClaimsJws(token).getBody();
     }
 }

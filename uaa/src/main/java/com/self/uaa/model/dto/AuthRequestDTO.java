@@ -6,6 +6,9 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.List;
+import java.util.Set;
+
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
@@ -14,4 +17,5 @@ import lombok.Setter;
 public class AuthRequestDTO {
     private String username;
     private String password;
+    private Set<String> authorities;
 }

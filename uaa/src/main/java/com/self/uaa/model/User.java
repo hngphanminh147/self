@@ -9,9 +9,14 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.Transient;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Document(collection = "user")
 @Builder
@@ -30,9 +35,15 @@ public class User extends AbstractAuditingModel implements UserDetails {
 
     private String password;
 
+    private Set<Role> roles;
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return null;
+        Set<GrantedAuthority> authorities = new HashSet<>();
+        for (Role role: roles) {
+            authorities.add(new SimpleGrantedAuthority(role.getValue()));
+        }
+        return authorities;
     }
 
     @Override
