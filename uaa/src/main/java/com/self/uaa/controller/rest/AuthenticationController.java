@@ -8,12 +8,17 @@ import com.self.uaa.model.dto.TokenDTO;
 import com.self.uaa.model.dto.UserDTO;
 import com.self.uaa.service.UserDetailsServiceImpl;
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.lang3.ObjectUtils;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.Map;
 
 @RestController
 @RequestMapping("api/auth/")
@@ -26,10 +31,15 @@ public class AuthenticationController {
 
     private final AuthenticationHelper authenticationHelper;
 
-    @PostMapping("authenticate")
-    public ResponseEntity<Object> authenticate(@RequestBody AuthRequestDTO authRequestDTO) throws Exception {
-        authenticationHelper.authenticate(authRequestDTO.getUsername(), authRequestDTO.getPassword());
-        UserDetails userDetails = userDetailsService.loadUserByUsername(authRequestDTO.getUsername());
+    @PostMapping(value = "authenticate", consumes= MediaType.APPLICATION_FORM_URLENCODED_VALUE)
+    public ResponseEntity<Object> authenticate(@RequestParam Map<String, String> params) throws Exception {
+        if (ObjectUtils.anyNull(params, params.get("username"), params.get("password"))) {
+            throw new Exception("User name or password must not null");
+        }
+        String username = params.get("username");
+        String password = params.get("password");
+        authenticationHelper.authenticate(username, password);
+        UserDetails userDetails = userDetailsService.loadUserByUsername(username);
         return ResponseEntity.ok(
                 AuthResponseDTO.builder()
                         .accessToken(jwtTokenHelper.generateAccessToken(userDetails))
