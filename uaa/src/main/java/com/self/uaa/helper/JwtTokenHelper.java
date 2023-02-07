@@ -23,11 +23,8 @@ public class JwtTokenHelper implements Serializable {
     @Value("${jwt.validity.access}")
     public long REFRESH_TOKEN_VALIDITY;
 
-    @Value("${jwt.secret.access}")
-    private String ACCESS_TOKEN_SECRET;
-
-    @Value("${jwt.secret.refresh}")
-    private String REFRESH_TOKEN_SECRET;
+    @Value("${jwt.secret}")
+    private String TOKEN_SECRET;
 
     public String getSubject(String token) {
         return getTokenClaim(token, Claims::getSubject);
@@ -44,19 +41,19 @@ public class JwtTokenHelper implements Serializable {
     public String generateAccessToken(UserDetails userDetails) {
         Map<String, Object> claims = new HashMap<>();
         claims.put("authorities", userDetails.getAuthorities());
-        return generateToken(claims, userDetails.getUsername(), ACCESS_TOKEN_VALIDITY, ACCESS_TOKEN_SECRET);
+        return generateToken(claims, userDetails.getUsername(), ACCESS_TOKEN_VALIDITY, TOKEN_SECRET);
     }
 
     public String generateRefreshToken(UserDetails userDetails) {
         Map<String, Object> claims = new HashMap<>();
         claims.put("authorities", userDetails.getAuthorities());
-        return generateToken(claims, userDetails.getUsername(), REFRESH_TOKEN_VALIDITY, REFRESH_TOKEN_SECRET);
+        return generateToken(claims, userDetails.getUsername(), REFRESH_TOKEN_VALIDITY, TOKEN_SECRET);
     }
 
     public String regenerateRefreshToken(String refreshToken) {
         Claims claims = getAllTokenClaims(refreshToken);
         String subject = claims.getSubject();
-        return generateToken(claims, subject, REFRESH_TOKEN_VALIDITY, REFRESH_TOKEN_SECRET);
+        return generateToken(claims, subject, REFRESH_TOKEN_VALIDITY, TOKEN_SECRET);
     }
 
     private String generateToken(Map<String, Object> claims, String subject, Long validity, String secret) {
@@ -89,7 +86,7 @@ public class JwtTokenHelper implements Serializable {
     }
 
     private Claims getAllTokenClaims(String token) {
-        return Jwts.parserBuilder().setSigningKey(new SecretKeySpec(REFRESH_TOKEN_SECRET.getBytes(),
+        return Jwts.parserBuilder().setSigningKey(new SecretKeySpec(TOKEN_SECRET.getBytes(),
                 SignatureAlgorithm.HS256.getJcaName())).build().parseClaimsJws(token).getBody();
     }
 }

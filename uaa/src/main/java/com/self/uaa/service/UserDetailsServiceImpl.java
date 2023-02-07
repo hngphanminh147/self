@@ -1,19 +1,16 @@
 package com.self.uaa.service;
 
+import com.self.uaa.constants.Constants;
 import com.self.uaa.model.User;
 import com.self.uaa.model.dto.UserDTO;
 import com.self.uaa.model.mapper.UserMapper;
 import com.self.uaa.repository.UserRepository;
-import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
-import lombok.Setter;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.mongodb.core.MongoTemplate;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -43,10 +40,9 @@ public class UserDetailsServiceImpl implements UserDetailsService {
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         if (StringUtils.isEmpty(username)) {
-            throw new UsernameNotFoundException("Username is empty");
+            throw new UsernameNotFoundException(Constants.USERNAME_IS_EMPTY);
         }
         return userRepository.findByUsername(username)
-                .orElseThrow(() -> new UsernameNotFoundException("Email not found"));
-
+                .orElseThrow(() -> new UsernameNotFoundException(Constants.USERNAME_NOT_FOUND));
     }
 }
